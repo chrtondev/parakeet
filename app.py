@@ -1,15 +1,13 @@
 from flask import Flask, request, jsonify
-import os
 from werkzeug.utils import secure_filename
-import subprocess
 from pathlib import Path
+import import_docs  # <-- this imports your sort logic
 
 app = Flask(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent
 INCOMING_DIR = BASE_DIR / "incoming"
 
-# --- Upload endpoint ---
 @app.route("/upload", methods=["POST"])
 def upload_file():
     if 'file' not in request.files:
@@ -21,12 +19,12 @@ def upload_file():
     filepath = INCOMING_DIR / filename
     file.save(str(filepath))
 
-    # Run the import_docs.py script to sort the file
-    subprocess.run(["python3", str(BASE_DIR / "import_docs.py")])
+    # Sort file immediately
+    import_docs.ensure_dirs()
+    import_docs.sort_file(filepath)
 
-    return jsonify({"status": "uploaded", "filename": filename})
+    return jsonify({"status": "uploaded and sorted", "filename": filename})
 
-# --- Basic health check ---
 @app.route("/")
 def index():
     return "DocServer running"
